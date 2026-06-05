@@ -1,6 +1,11 @@
-import { AddLikeDto } from "@/posts/posts.dtos"
+export type CreateLikeData = {
+    postId: string
+    reactionType: string
+    weight: number
+    source: string
+}
 
-export type LikeRecord = {
+export type LikeEntity = {
     id: string
     postId: string
     reactionType: string
@@ -9,6 +14,6 @@ export type LikeRecord = {
     createdAt: Date
 }
 
-export interface ILikeRepository {
-    createForPost(postId: string, data: AddLikeDto & { weight: number }): Promise<LikeRecord>
+export abstract class LikeRepository {
+    abstract create(data: CreateLikeData): Promise<LikeEntity>
 }

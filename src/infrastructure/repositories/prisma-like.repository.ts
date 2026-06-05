@@ -1,27 +1,18 @@
 import { Injectable } from "@nestjs/common"
-
 import {
-    ILikeRepository,
-    LikeRecord,
+    CreateLikeData,
+    LikeEntity,
+    LikeRepository,
 } from "@/domain/repositories/like.repository"
-import { AddLikeDto } from "@/posts/posts.dtos"
 import { PrismaService } from "@/shared/prisma.service"
 
 @Injectable()
-export class PrismaLikeRepository implements ILikeRepository {
-    constructor(private readonly prisma: PrismaService) {}
+export class PrismaLikeRepository extends LikeRepository {
+    constructor(private readonly prisma: PrismaService) {
+        super()
+    }
 
-    createForPost(
-        postId: string,
-        data: AddLikeDto & { weight: number },
-    ): Promise<LikeRecord> {
-        return this.prisma.like.create({
-            data: {
-                postId,
-                reactionType: data.reactionType ?? "like",
-                weight: data.weight,
-                source: "likes-module",
-            },
-        })
+    async create(data: CreateLikeData): Promise<LikeEntity> {
+        return this.prisma.like.create({ data })
     }
 }

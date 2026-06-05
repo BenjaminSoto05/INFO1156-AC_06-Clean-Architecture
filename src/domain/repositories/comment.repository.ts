@@ -1,6 +1,10 @@
-import { CreateCommentDto } from "@/posts/posts.dtos"
+export type CreateCommentData = {
+    postId: string
+    content: string
+    source: string
+}
 
-export type CommentRecord = {
+export type CommentEntity = {
     id: string
     postId: string
     content: string

@@ -1,25 +1,9 @@
-import { Inject, Injectable } from "@nestjs/common"
-import {
-    IPostRepository,
-    PostWithRelations,
-} from "@/domain/repositories/post.repository"
-import { CreatePostDto } from "@/posts/posts.dtos"
-import { ModerationService } from "@/moderation/moderation.service"
+import { Injectable } from "@nestjs/common"
+import { PrismaService } from "@/shared/prisma.service"
 
 @Injectable()
 export class PostsService {
-    constructor(
-        @Inject("POST_REPOSITORY")
-        private readonly postsRepository: IPostRepository,
-        private readonly moderationService: ModerationService,
-    ) {}
-
-    async create(data: CreatePostDto) {
-        const text = `${data.title} ${data.description}`
-        await this.moderationService.assertApprovedForPost(text)
-
-        return await this.postsRepository.create(data)
-    }
+    constructor(private readonly prisma: PrismaService) {}
 
     findAll() {
         return this.postsRepository.findAll()

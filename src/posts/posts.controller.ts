@@ -1,17 +1,14 @@
 import { Body, Controller, Get, Post, Query } from "@nestjs/common"
 
 import { CreatePostDto, FeedQueryDto } from "@/posts/posts.dtos"
-import { FeedMode } from "@/posts/feed-ranking.strategy"
 import { CreatePostUseCase } from "@/application/use-cases/create-post.use-case"
-import { GetFeedUseCase } from "@/application/use-cases/get-feed.use-case"
-import { ListPostsUseCase } from "@/application/use-cases/list-posts.use-case"
 
 @Controller("api/posts")
 export class PostsController {
     constructor(
+        private readonly postsService: PostsService,
+        private readonly feedRankingFactory: FeedRankingStrategyFactory,
         private readonly createPostUseCase: CreatePostUseCase,
-        private readonly listPostsUseCase: ListPostsUseCase,
-        private readonly getFeedUseCase: GetFeedUseCase,
     ) {}
 
     @Post()

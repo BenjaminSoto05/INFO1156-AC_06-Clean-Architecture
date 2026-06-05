@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common"
 import { PrismaModerationRepository } from "@/infrastructure/repositories/prisma-moderation.repository"
 import { ModerationController } from "@/moderation/moderation.controller"
 import { ModerationService } from "@/moderation/moderation.service"
+import { ModerationDomainService } from "@/domain/services/moderation-domain.service"
 import { ModerationRepository } from "@/domain/repositories/moderation.repository"
 import { PrismaModerationRepository } from "@/infrastructure/repositories/prisma-moderation.repository"
 
@@ -9,11 +10,12 @@ import { PrismaModerationRepository } from "@/infrastructure/repositories/prisma
     controllers: [ModerationController],
     providers: [
         ModerationService,
+        ModerationDomainService,
         {
-            provide: "MODERATION_REPOSITORY",
+            provide: ModerationRepository,
             useClass: PrismaModerationRepository,
         },
     ],
-    exports: [ModerationService],
+    exports: [ModerationDomainService, ModerationRepository],
 })
 export class ModerationModule {}

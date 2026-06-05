@@ -1,30 +1,25 @@
 import { Injectable } from "@nestjs/common"
-
 import {
-    CommentRecord,
-    ICommentRepository,
+    CommentEntity,
+    CommentRepository,
+    CreateCommentData,
 } from "@/domain/repositories/comment.repository"
-import { CreateCommentDto } from "@/posts/posts.dtos"
 import { PrismaService } from "@/shared/prisma.service"
 
 @Injectable()
-export class PrismaCommentRepository implements ICommentRepository {
-    constructor(private readonly prisma: PrismaService) {}
+export class PrismaCommentRepository extends CommentRepository {
+    constructor(private readonly prisma: PrismaService) {
+        super()
+    }
 
-    findManyByPostId(postId: string): Promise<CommentRecord[]> {
+    async create(data: CreateCommentData): Promise<CommentEntity> {
+        return this.prisma.comment.create({ data })
+    }
+
+    async findByPostId(postId: string): Promise<CommentEntity[]> {
         return this.prisma.comment.findMany({
             where: { postId },
             orderBy: { createdAt: "desc" },
-        })
-    }
-
-    createForPost(postId: string, data: CreateCommentDto): Promise<CommentRecord> {
-        return this.prisma.comment.create({
-            data: {
-                postId,
-                content: data.content,
-                source: "comments-module",
-            },
         })
     }
 }
