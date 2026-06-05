@@ -6,22 +6,17 @@ export class PostsService {
     constructor(private readonly prisma: PrismaService) {}
 
     findAll() {
-        return this.prisma.post.findMany({
-            orderBy: { createdAt: "desc" },
-        })
+        return this.postsRepository.findAll()
     }
 
     findById(id: string) {
-        return this.prisma.post.findUnique({ where: { id } })
+        return this.postsRepository.findById(id)
     }
 
     async getFeedPosts(categoryId?: string) {
-        const posts = await this.prisma.post.findMany({
-            where: categoryId ? { categoryId } : undefined,
-            include: { comments: true, likes: true, category: true },
-        })
+        const posts = await this.postsRepository.findManyWithRelations(categoryId)
 
-        return posts.map((post) => ({
+        return posts.map((post: PostWithRelations) => ({
             id: post.id,
             title: post.title,
             description: post.description,

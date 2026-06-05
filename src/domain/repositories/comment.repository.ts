@@ -10,10 +10,9 @@ export type CommentEntity = {
     content: string
     source: string
     createdAt: Date
-    updatedAt: Date
 }
 
-export abstract class CommentRepository {
-    abstract create(data: CreateCommentData): Promise<CommentEntity>
-    abstract findByPostId(postId: string): Promise<CommentEntity[]>
+export interface ICommentRepository {
+    findManyByPostId(postId: string): Promise<CommentRecord[]>
+    createForPost(postId: string, data: CreateCommentDto): Promise<CommentRecord>
 }

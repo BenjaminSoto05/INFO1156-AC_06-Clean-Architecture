@@ -1,32 +1,38 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
-import { PrismaService } from "@/shared/prisma.service"
+import {
+    BadRequestException,
+    Inject,
+    Injectable,
+    NotFoundException,
+} from "@nestjs/common"
+import { IModerationRepository } from "@/domain/repositories/moderation.repository"
+import {
+    evaluateTextAgainstProhibitedWords,
+    ProhibitedWord,
+} from "@/domain/moderation/text-moderation"
 
 @Injectable()
 export class ModerationService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        @Inject("MODERATION_REPOSITORY")
+        private readonly moderationRepository: IModerationRepository,
+    ) {}
 
     findAll() {
-        return this.prisma.prohibitedWord.findMany({
-            orderBy: { createdAt: "desc" },
-        })
+        return this.moderationRepository.listProhibitedWords()
     }
 
     create(word: string, category: string) {
-        return this.prisma.prohibitedWord.create({ data: { word, category } })
+        return this.moderationRepository.createProhibitedWord(word, category)
     }
 
     async delete(id: string) {
-        try {
-            return await this.prisma.prohibitedWord.delete({ where: { id } })
-        } catch (err: unknown) {
-            if (
-                err instanceof Error &&
-                "code" in err &&
-                (err as { code: string }).code === "P2025"
-            ) {
-                throw new NotFoundException("Palabra prohibida no encontrada")
-            }
-            throw err
+        const deleted =
+            await this.moderationRepository.deleteProhibitedWordById(id)
+
+        if (!deleted) {
+            throw new NotFoundException("Palabra prohibida no encontrada")
         }
+
+        return deleted
     }
 }
