@@ -1,33 +1,6 @@
-import { Injectable } from "@nestjs/common"
-import { PrismaService } from "@/shared/prisma.service"
-
-@Injectable()
-export class PostsService {
-    constructor(private readonly prisma: PrismaService) {}
-
-    findAll() {
-        return this.postsRepository.findAll()
-    }
-
-    findById(id: string) {
-        return this.postsRepository.findById(id)
-    }
-
-    async getFeedPosts(categoryId?: string) {
-        const posts = await this.postsRepository.findManyWithRelations(categoryId)
-
-        return posts.map((post: PostWithRelations) => ({
-            id: post.id,
-            title: post.title,
-            description: post.description,
-            imageUrl: post.imageUrl,
-            categoryId: post.categoryId,
-            category: post.category?.name ?? null,
-            createdAt: post.createdAt,
-            updatedAt: post.updatedAt,
-            likesCount: post.likes.reduce((sum, l) => sum + l.weight, 0),
-            commentsCount: post.comments.length,
-            relevanceScore: 0,
-        }))
-    }
-}
+// Este servicio fue reemplazado por los casos de uso:
+// - CreatePostUseCase (src/application/use-cases/create-post.use-case.ts)
+// - ListPostsUseCase (src/application/use-cases/list-posts.use-case.ts)
+// - GetFeedUseCase (src/application/use-cases/get-feed.use-case.ts)
+//
+// Se puede eliminar este archivo de forma segura.

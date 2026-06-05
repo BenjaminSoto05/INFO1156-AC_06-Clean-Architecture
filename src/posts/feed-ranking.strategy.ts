@@ -8,11 +8,7 @@ export interface FeedRankingStrategy {
 }
 
 @Injectable()
-export class LatestRankingStrategy implements IFeedRankingStrategy {
-    getMode(): string {
-        return "latest"
-    }
-
+export class LatestRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort(
             (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
@@ -21,33 +17,21 @@ export class LatestRankingStrategy implements IFeedRankingStrategy {
 }
 
 @Injectable()
-export class MostLikedRankingStrategy implements IFeedRankingStrategy {
-    getMode(): string {
-        return "mostLiked"
-    }
-
+export class MostLikedRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort((a, b) => b.likesCount - a.likesCount)
     }
 }
 
 @Injectable()
-export class MostCommentedRankingStrategy implements IFeedRankingStrategy {
-    getMode(): string {
-        return "mostCommented"
-    }
-
+export class MostCommentedRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort((a, b) => b.commentsCount - a.commentsCount)
     }
 }
 
 @Injectable()
-export class RelevanceRankingStrategy implements IFeedRankingStrategy {
-    getMode(): string {
-        return "relevance"
-    }
-
+export class RelevanceRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort((a, b) => b.relevanceScore - a.relevanceScore)
     }
@@ -74,10 +58,7 @@ export class FeedRankingStrategyFactory {
         if (!strategy) {
             return this.strategies.get("latest")!
         }
-        return strategy
-    }
 
         return strategy
     }
 }
-

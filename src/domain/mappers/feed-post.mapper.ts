@@ -4,10 +4,7 @@ import { FeedPost, RawFeedPost } from "@/domain/entities/post.entity"
 @Injectable()
 export class FeedPostMapper {
     toFeedPost(raw: RawFeedPost): FeedPost {
-        const likesCount = raw.likes.reduce(
-            (sum, like) => sum + like.weight,
-            0,
-        )
+        const likesCount = raw.likes.reduce((sum, like) => sum + like.weight, 0)
         const commentsCount = raw.comments.length
         const relevanceScore = likesCount * 2 + commentsCount
 

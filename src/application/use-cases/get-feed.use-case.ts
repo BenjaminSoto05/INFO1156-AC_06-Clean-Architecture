@@ -1,5 +1,8 @@
 import { Injectable } from "@nestjs/common"
-import { FeedMode, FeedRankingStrategyFactory } from "@/posts/feed-ranking.strategy"
+import {
+    FeedMode,
+    FeedRankingStrategyFactory,
+} from "@/posts/feed-ranking.strategy"
 import { PostRepository } from "@/domain/repositories/post.repository"
 import { FeedPost } from "@/domain/entities/post.entity"
 import { FeedPostMapper } from "@/domain/mappers/feed-post.mapper"
@@ -18,4 +21,3 @@ export class GetFeedUseCase {
         return this.feedRankingFactory.forMode(mode).rank(feedPosts)
     }
 }
-

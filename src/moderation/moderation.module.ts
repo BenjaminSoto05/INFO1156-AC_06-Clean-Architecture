@@ -1,5 +1,4 @@
 import { Module } from "@nestjs/common"
-import { PrismaModerationRepository } from "@/infrastructure/repositories/prisma-moderation.repository"
 import { ModerationController } from "@/moderation/moderation.controller"
 import { ModerationService } from "@/moderation/moderation.service"
 import { ModerationDomainService } from "@/domain/services/moderation-domain.service"
