@@ -1,5 +1,13 @@
 import { Module } from "@nestjs/common"
-import { FeedRankingStrategyFactory } from "@/posts/feed-ranking.strategy"
+import {
+    FeedRankingStrategyFactory,
+    LatestRankingStrategy,
+    MostLikedRankingStrategy,
+    MostCommentedRankingStrategy,
+    RelevanceRankingStrategy,
+    IFeedRankingStrategy,
+} from "@/posts/feed-ranking.strategy"
+import { PrismaPostRepository } from "@/infrastructure/repositories/prisma-post.repository"
 import { ModerationModule } from "@/moderation/moderation.module"
 import { PostsController } from "@/posts/posts.controller"
 import { PostsService } from "@/posts/posts.service"
@@ -21,11 +29,11 @@ import { FeedPostMapper } from "@/domain/mappers/feed-post.mapper"
         ListPostsUseCase,
         GetFeedUseCase,
         {
-            provide: PostRepository,
+            provide: "POST_REPOSITORY",
             useClass: PrismaPostRepository,
         },
     ],
-    exports: [PostsService],
+    exports: [PostsService, "POST_REPOSITORY"],
 })
 export class PostsModule {}
 

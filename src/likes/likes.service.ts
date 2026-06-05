@@ -1,17 +1,20 @@
 import {
     BadRequestException,
+    Inject,
     Injectable,
     NotFoundException,
 } from "@nestjs/common"
+import { ILikeRepository } from "@/domain/repositories/like.repository"
+import { IPostRepository } from "@/domain/repositories/post.repository"
 import { AddLikeDto } from "@/posts/posts.dtos"
-import { PostsService } from "@/posts/posts.service"
-import { PrismaService } from "@/shared/prisma.service"
 
 @Injectable()
 export class LikesService {
     constructor(
-        private readonly prisma: PrismaService,
-        private readonly postsService: PostsService,
+        @Inject("LIKE_REPOSITORY")
+        private readonly likesRepository: ILikeRepository,
+        @Inject("POST_REPOSITORY")
+        private readonly postsRepository: IPostRepository,
     ) {}
 
     async create(postId: string, data: AddLikeDto) {
@@ -23,18 +26,11 @@ export class LikesService {
             throw new BadRequestException("El peso debe ser al menos 1")
         }
 
-        return this.prisma.like.create({
-            data: {
-                postId,
-                reactionType: data.reactionType ?? "like",
-                weight,
-                source: "likes-module",
-            },
-        })
+        return this.likesRepository.createForPost(postId, { ...data, weight })
     }
 
     private async assertPostExists(postId: string) {
-        const post = await this.postsService.findById(postId)
+        const post = await this.postsRepository.findById(postId)
 
         if (!post) {
             throw new NotFoundException("Post no encontrado")

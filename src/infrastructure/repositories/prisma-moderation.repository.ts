@@ -1,23 +1,42 @@
 import { Injectable } from "@nestjs/common"
+
+import {
+    IModerationRepository,
+    ProhibitedWordRecord,
+} from "@/domain/repositories/moderation.repository"
 import { PrismaService } from "@/shared/prisma.service"
-import { ModerationRepository } from "@/domain/repositories/moderation.repository"
-import { ProhibitedWord } from "@/domain/entities/moderation.entity"
 
 @Injectable()
-export class PrismaModerationRepository implements ModerationRepository {
+export class PrismaModerationRepository implements IModerationRepository {
     constructor(private readonly prisma: PrismaService) {}
 
-    findAll(): Promise<ProhibitedWord[]> {
+    listProhibitedWords(): Promise<ProhibitedWordRecord[]> {
         return this.prisma.prohibitedWord.findMany({
             orderBy: { createdAt: "desc" },
         })
     }
 
-    create(word: string, category: string): Promise<ProhibitedWord> {
+    createProhibitedWord(
+        word: string,
+        category: string,
+    ): Promise<ProhibitedWordRecord> {
         return this.prisma.prohibitedWord.create({ data: { word, category } })
     }
 
-    delete(id: string): Promise<ProhibitedWord> {
-        return this.prisma.prohibitedWord.delete({ where: { id } })
+    async deleteProhibitedWordById(
+        id: string,
+    ): Promise<ProhibitedWordRecord | null> {
+        try {
+            return await this.prisma.prohibitedWord.delete({ where: { id } })
+        } catch (err: unknown) {
+            if (
+                err instanceof Error &&
+                "code" in err &&
+                (err as { code: string }).code === "P2025"
+            ) {
+                return null
+            }
+            throw err
+        }
     }
 }

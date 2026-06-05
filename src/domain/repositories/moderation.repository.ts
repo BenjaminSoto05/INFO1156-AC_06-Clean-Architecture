@@ -1,7 +1,12 @@
-import { ProhibitedWord } from "@/domain/entities/moderation.entity"
+export type ProhibitedWordRecord = {
+    id: string
+    word: string
+    category: string
+    createdAt: Date
+}
 
-export abstract class ModerationRepository {
-    abstract findAll(): Promise<ProhibitedWord[]>
-    abstract create(word: string, category: string): Promise<ProhibitedWord>
-    abstract delete(id: string): Promise<ProhibitedWord>
+export interface IModerationRepository {
+    listProhibitedWords(): Promise<ProhibitedWordRecord[]>
+    createProhibitedWord(word: string, category: string): Promise<ProhibitedWordRecord>
+    deleteProhibitedWordById(id: string): Promise<ProhibitedWordRecord | null>
 }
