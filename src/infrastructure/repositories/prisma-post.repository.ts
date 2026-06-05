@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common"
 import type { Post as PrismaPost } from "@prisma/client"
 import { PrismaService } from "@/shared/prisma.service"
 import { CreatePostDto } from "@/posts/posts.dtos"
-import { FeedPost, Post } from "@/domain/entities/post.entity"
+import { Post, RawFeedPost } from "@/domain/entities/post.entity"
 import { PostRepository } from "@/domain/repositories/post.repository"
 
 @Injectable()
@@ -30,7 +30,7 @@ export class PrismaPostRepository implements PostRepository {
         return post ? this.toDomain(post) : null
     }
 
-    async findFeedItems(categoryId?: string): Promise<FeedPost[]> {
+    async findFeedItems(categoryId?: string): Promise<RawFeedPost[]> {
         const posts = await this.prisma.post.findMany({
             where: categoryId ? { categoryId } : undefined,
             include: { comments: true, likes: true, category: true },
@@ -45,9 +45,8 @@ export class PrismaPostRepository implements PostRepository {
             category: post.category?.name ?? null,
             createdAt: post.createdAt,
             updatedAt: post.updatedAt,
-            likesCount: post.likes.reduce((sum, like) => sum + like.weight, 0),
-            commentsCount: post.comments.length,
-            relevanceScore: 0,
+            likes: post.likes.map((like) => ({ weight: like.weight })),
+            comments: post.comments.map((comment) => ({ id: comment.id })),
         }))
     }
 
@@ -63,3 +62,4 @@ export class PrismaPostRepository implements PostRepository {
         }
     }
 }
+

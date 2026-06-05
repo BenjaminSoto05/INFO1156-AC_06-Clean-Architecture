@@ -1,15 +1,9 @@
 import { Injectable } from "@nestjs/common"
-
-export type FeedPost = {
-    createdAt: Date
-    likesCount: number
-    commentsCount: number
-    relevanceScore: number
-}
+import { FeedPost } from "@/domain/entities/post.entity"
 
 export type FeedMode = "latest" | "mostLiked" | "mostCommented" | "relevance"
 
-interface FeedRankingStrategy {
+export interface FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[]
 }
 
@@ -41,24 +35,27 @@ class RelevanceRankingStrategy implements FeedRankingStrategy {
 
 @Injectable()
 export class FeedRankingStrategyFactory {
-    private readonly latest = new LatestRankingStrategy()
-    private readonly mostLiked = new MostLikedRankingStrategy()
-    private readonly mostCommented = new MostCommentedRankingStrategy()
-    private readonly relevance = new RelevanceRankingStrategy()
+    private readonly strategies = new Map<FeedMode, FeedRankingStrategy>()
 
-    forMode(mode: string): FeedRankingStrategy {
-        if (mode === "mostLiked") {
-            return this.mostLiked
+    constructor() {
+        this.register("latest", new LatestRankingStrategy())
+        this.register("mostLiked", new MostLikedRankingStrategy())
+        this.register("mostCommented", new MostCommentedRankingStrategy())
+        this.register("relevance", new RelevanceRankingStrategy())
+    }
+
+    register(mode: FeedMode, strategy: FeedRankingStrategy): void {
+        this.strategies.set(mode, strategy)
+    }
+
+    forMode(mode: FeedMode): FeedRankingStrategy {
+        const strategy = this.strategies.get(mode)
+
+        if (!strategy) {
+            return this.strategies.get("latest")!
         }
 
-        if (mode === "mostCommented") {
-            return this.mostCommented
-        }
-
-        if (mode === "relevance") {
-            return this.relevance
-        }
-
-        return this.latest
+        return strategy
     }
 }
+
