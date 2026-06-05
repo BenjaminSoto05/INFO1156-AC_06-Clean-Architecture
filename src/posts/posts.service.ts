@@ -1,45 +1,38 @@
-import { BadRequestException, Injectable } from "@nestjs/common"
+import { Inject, Injectable } from "@nestjs/common"
+import {
+    IPostRepository,
+    PostWithRelations,
+} from "@/domain/repositories/post.repository"
 import { CreatePostDto } from "@/posts/posts.dtos"
 import { ModerationService } from "@/moderation/moderation.service"
-import { PrismaService } from "@/shared/prisma.service"
 
 @Injectable()
 export class PostsService {
     constructor(
-        private readonly prisma: PrismaService,
+        @Inject("POST_REPOSITORY")
+        private readonly postsRepository: IPostRepository,
         private readonly moderationService: ModerationService,
     ) {}
 
     async create(data: CreatePostDto) {
         const text = `${data.title} ${data.description}`
-        const moderation = await this.moderationService.moderate(text)
+        await this.moderationService.assertApprovedForPost(text)
 
-        if (!moderation.approved) {
-            throw new BadRequestException(
-                moderation.reason ?? "Post bloqueado por moderación",
-            )
-        }
-
-        return await this.prisma.post.create({ data })
+        return await this.postsRepository.create(data)
     }
 
     findAll() {
-        return this.prisma.post.findMany({
-            orderBy: { createdAt: "desc" },
-        })
+        return this.postsRepository.findAll()
     }
 
     findById(id: string) {
-        return this.prisma.post.findUnique({ where: { id } })
+        return this.postsRepository.findById(id)
     }
 
     async getFeedPosts(categoryId?: string) {
-        const posts = await this.prisma.post.findMany({
-            where: categoryId ? { categoryId } : undefined,
-            include: { comments: true, likes: true, category: true },
-        })
+        const posts = await this.postsRepository.findManyWithRelations(categoryId)
 
-        return posts.map((post) => ({
+        return posts.map((post: PostWithRelations) => ({
             id: post.id,
             title: post.title,
             description: post.description,

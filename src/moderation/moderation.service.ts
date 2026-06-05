@@ -1,5 +1,14 @@
-import { Injectable, NotFoundException } from "@nestjs/common"
-import { PrismaService } from "@/shared/prisma.service"
+import {
+    BadRequestException,
+    Inject,
+    Injectable,
+    NotFoundException,
+} from "@nestjs/common"
+import { IModerationRepository } from "@/domain/repositories/moderation.repository"
+import {
+    evaluateTextAgainstProhibitedWords,
+    ProhibitedWord,
+} from "@/domain/moderation/text-moderation"
 
 export type ModerationResult = {
     approved: boolean
@@ -7,54 +16,55 @@ export type ModerationResult = {
     category?: string
 }
 
-const buildFuzzyRegex = (word: string) => {
-    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    return new RegExp(escaped.split("").join("[^a-zA-Z0-9]*"), "gi")
-}
-
 @Injectable()
 export class ModerationService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        @Inject("MODERATION_REPOSITORY")
+        private readonly moderationRepository: IModerationRepository,
+    ) {}
+
+    async assertApprovedForPost(text: string) {
+        return this.assertApproved(text, "Post bloqueado por moderación")
+    }
+
+    async assertApprovedForComment(text: string) {
+        return this.assertApproved(text, "Comentario bloqueado por moderación")
+    }
+
+    private async assertApproved(text: string, defaultMessage: string) {
+        const decision = await this.moderate(text)
+
+        if (!decision.approved) {
+            throw new BadRequestException(decision.reason ?? defaultMessage)
+        }
+    }
+
+    private async getProhibitedWords(): Promise<ProhibitedWord[]> {
+        const words = await this.moderationRepository.listProhibitedWords()
+        return words.map((w) => ({ word: w.word, category: w.category }))
+    }
 
     async moderate(text: string): Promise<ModerationResult> {
-        const words = await this.prisma.prohibitedWord.findMany()
-
-        for (const pw of words) {
-            const regex = buildFuzzyRegex(pw.word)
-            if (regex.test(text)) {
-                return {
-                    approved: false,
-                    reason: `Contiene palabra prohibida: "${pw.word}"`,
-                    category: pw.category,
-                }
-            }
-        }
-
-        return { approved: true }
+        const prohibitedWords = await this.getProhibitedWords()
+        return evaluateTextAgainstProhibitedWords(text, prohibitedWords)
     }
 
     findAll() {
-        return this.prisma.prohibitedWord.findMany({
-            orderBy: { createdAt: "desc" },
-        })
+        return this.moderationRepository.listProhibitedWords()
     }
 
     create(word: string, category: string) {
-        return this.prisma.prohibitedWord.create({ data: { word, category } })
+        return this.moderationRepository.createProhibitedWord(word, category)
     }
 
     async delete(id: string) {
-        try {
-            return await this.prisma.prohibitedWord.delete({ where: { id } })
-        } catch (err: unknown) {
-            if (
-                err instanceof Error &&
-                "code" in err &&
-                (err as { code: string }).code === "P2025"
-            ) {
-                throw new NotFoundException("Palabra prohibida no encontrada")
-            }
-            throw err
+        const deleted =
+            await this.moderationRepository.deleteProhibitedWordById(id)
+
+        if (!deleted) {
+            throw new NotFoundException("Palabra prohibida no encontrada")
         }
+
+        return deleted
     }
 }
