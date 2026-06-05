@@ -16,39 +16,18 @@ import { GetFeedUseCase } from "@/application/use-cases/get-feed.use-case"
 import { ListPostsUseCase } from "@/application/use-cases/list-posts.use-case"
 import { PostRepository } from "@/domain/repositories/post.repository"
 import { PrismaPostRepository } from "@/infrastructure/repositories/prisma-post.repository"
+import { FeedPostMapper } from "@/domain/mappers/feed-post.mapper"
 
 @Module({
     imports: [ModerationModule],
     controllers: [PostsController],
     providers: [
         PostsService,
-        LatestRankingStrategy,
-        MostLikedRankingStrategy,
-        MostCommentedRankingStrategy,
-        RelevanceRankingStrategy,
-        {
-            provide: FeedRankingStrategyFactory,
-            useFactory: (
-                latest: LatestRankingStrategy,
-                mostLiked: MostLikedRankingStrategy,
-                mostCommented: MostCommentedRankingStrategy,
-                relevance: RelevanceRankingStrategy,
-            ) => {
-                const strategies: IFeedRankingStrategy[] = [
-                    latest,
-                    mostLiked,
-                    mostCommented,
-                    relevance,
-                ]
-                return new FeedRankingStrategyFactory(strategies)
-            },
-            inject: [
-                LatestRankingStrategy,
-                MostLikedRankingStrategy,
-                MostCommentedRankingStrategy,
-                RelevanceRankingStrategy,
-            ],
-        },
+        FeedRankingStrategyFactory,
+        FeedPostMapper,
+        CreatePostUseCase,
+        ListPostsUseCase,
+        GetFeedUseCase,
         {
             provide: "POST_REPOSITORY",
             useClass: PrismaPostRepository,
@@ -57,3 +36,4 @@ import { PrismaPostRepository } from "@/infrastructure/repositories/prisma-post.
     exports: [PostsService, "POST_REPOSITORY"],
 })
 export class PostsModule {}
+

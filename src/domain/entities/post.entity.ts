@@ -14,3 +14,9 @@ export type FeedPost = Post & {
     commentsCount: number
     relevanceScore: number
 }
+
+export type RawFeedPost = Post & {
+    category: string | null
+    likes: Array<{ weight: number }>
+    comments: Array<{ id: string }>
+}

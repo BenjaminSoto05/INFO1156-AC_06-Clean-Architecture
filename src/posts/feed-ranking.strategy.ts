@@ -1,16 +1,9 @@
-import { BadRequestException, Injectable } from "@nestjs/common"
-
-export type FeedPost = {
-    createdAt: Date
-    likesCount: number
-    commentsCount: number
-    relevanceScore: number
-}
+import { Injectable } from "@nestjs/common"
+import { FeedPost } from "@/domain/entities/post.entity"
 
 export type FeedMode = "latest" | "mostLiked" | "mostCommented" | "relevance"
 
-export interface IFeedRankingStrategy {
-    getMode(): string
+export interface FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[]
 }
 
@@ -62,27 +55,29 @@ export class RelevanceRankingStrategy implements IFeedRankingStrategy {
 
 @Injectable()
 export class FeedRankingStrategyFactory {
-    private readonly strategiesRegistry: Map<string, IFeedRankingStrategy>
+    private readonly strategies = new Map<FeedMode, FeedRankingStrategy>()
 
-    constructor(strategies: IFeedRankingStrategy[]) {
-        this.strategiesRegistry = new Map(
-            strategies.map((s) => [s.getMode(), s]),
-        )
+    constructor() {
+        this.register("latest", new LatestRankingStrategy())
+        this.register("mostLiked", new MostLikedRankingStrategy())
+        this.register("mostCommented", new MostCommentedRankingStrategy())
+        this.register("relevance", new RelevanceRankingStrategy())
     }
 
-    forMode(mode: string): IFeedRankingStrategy {
-        const strategy = this.strategiesRegistry.get(mode)
+    register(mode: FeedMode, strategy: FeedRankingStrategy): void {
+        this.strategies.set(mode, strategy)
+    }
+
+    forMode(mode: FeedMode): FeedRankingStrategy {
+        const strategy = this.strategies.get(mode)
+
         if (!strategy) {
-            throw new BadRequestException(
-                `Modo de feed no válido: ${mode}. Modos disponibles: ${Array.from(
-                    this.strategiesRegistry.keys(),
-                ).join(", ")}`,
-            )
+            return this.strategies.get("latest")!
         }
         return strategy
     }
 
-    getAvailableModes(): string[] {
-        return Array.from(this.strategiesRegistry.keys())
+        return strategy
     }
 }
+

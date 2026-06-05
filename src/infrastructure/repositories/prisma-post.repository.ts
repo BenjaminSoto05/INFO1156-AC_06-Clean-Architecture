@@ -6,7 +6,8 @@ import {
     PostWithRelations,
 } from "@/domain/repositories/post.repository"
 import { CreatePostDto } from "@/posts/posts.dtos"
-import { PrismaService } from "@/shared/prisma.service"
+import { Post, RawFeedPost } from "@/domain/entities/post.entity"
+import { PostRepository } from "@/domain/repositories/post.repository"
 
 @Injectable()
 export class PrismaPostRepository implements IPostRepository {
@@ -26,10 +27,36 @@ export class PrismaPostRepository implements IPostRepository {
         return this.prisma.post.findUnique({ where: { id } })
     }
 
-    findManyWithRelations(categoryId?: string): Promise<PostWithRelations[]> {
-        return this.prisma.post.findMany({
+    async findFeedItems(categoryId?: string): Promise<RawFeedPost[]> {
+        const posts = await this.prisma.post.findMany({
             where: categoryId ? { categoryId } : undefined,
             include: { comments: true, likes: true, category: true },
         })
+
+        return posts.map((post) => ({
+            id: post.id,
+            title: post.title,
+            description: post.description,
+            imageUrl: post.imageUrl,
+            categoryId: post.categoryId,
+            category: post.category?.name ?? null,
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+            likes: post.likes.map((like) => ({ weight: like.weight })),
+            comments: post.comments.map((comment) => ({ id: comment.id })),
+        }))
+    }
+
+    private toDomain(post: PrismaPost): Post {
+        return {
+            id: post.id,
+            title: post.title,
+            description: post.description,
+            imageUrl: post.imageUrl,
+            categoryId: post.categoryId ?? null,
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+        }
     }
 }
+

@@ -1,24 +1,10 @@
 import { CreatePostDto } from "@/posts/posts.dtos"
+import { Post, RawFeedPost } from "@/domain/entities/post.entity"
 
-export type PostRecord = {
-    id: string
-    title: string
-    description: string
-    imageUrl: string
-    categoryId: string | null
-    createdAt: Date
-    updatedAt: Date
+export abstract class PostRepository {
+    abstract create(data: CreatePostDto): Promise<Post>
+    abstract findAll(): Promise<Post[]>
+    abstract findById(id: string): Promise<Post | null>
+    abstract findFeedItems(categoryId?: string): Promise<RawFeedPost[]>
 }
 
-export type PostWithRelations = PostRecord & {
-    category?: { name: string } | null
-    comments: unknown[]
-    likes: Array<{ weight: number }>
-}
-
-export interface IPostRepository {
-    create(data: CreatePostDto): Promise<PostRecord>
-    findAll(): Promise<PostRecord[]>
-    findById(id: string): Promise<PostRecord | null>
-    findManyWithRelations(categoryId?: string): Promise<PostWithRelations[]>
-}
