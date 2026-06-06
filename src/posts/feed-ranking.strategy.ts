@@ -1,19 +1,14 @@
 import { Injectable } from "@nestjs/common"
-
-export type FeedPost = {
-    createdAt: Date
-    likesCount: number
-    commentsCount: number
-    relevanceScore: number
-}
+import { FeedPost } from "@/domain/entities/post.entity"
 
 export type FeedMode = "latest" | "mostLiked" | "mostCommented" | "relevance"
 
-interface FeedRankingStrategy {
+export interface FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[]
 }
 
-class LatestRankingStrategy implements FeedRankingStrategy {
+@Injectable()
+export class LatestRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort(
             (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
@@ -21,19 +16,22 @@ class LatestRankingStrategy implements FeedRankingStrategy {
     }
 }
 
-class MostLikedRankingStrategy implements FeedRankingStrategy {
+@Injectable()
+export class MostLikedRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort((a, b) => b.likesCount - a.likesCount)
     }
 }
 
-class MostCommentedRankingStrategy implements FeedRankingStrategy {
+@Injectable()
+export class MostCommentedRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort((a, b) => b.commentsCount - a.commentsCount)
     }
 }
 
-class RelevanceRankingStrategy implements FeedRankingStrategy {
+@Injectable()
+export class RelevanceRankingStrategy implements FeedRankingStrategy {
     rank(posts: FeedPost[]): FeedPost[] {
         return [...posts].sort((a, b) => b.relevanceScore - a.relevanceScore)
     }
@@ -41,24 +39,26 @@ class RelevanceRankingStrategy implements FeedRankingStrategy {
 
 @Injectable()
 export class FeedRankingStrategyFactory {
-    private readonly latest = new LatestRankingStrategy()
-    private readonly mostLiked = new MostLikedRankingStrategy()
-    private readonly mostCommented = new MostCommentedRankingStrategy()
-    private readonly relevance = new RelevanceRankingStrategy()
+    private readonly strategies = new Map<FeedMode, FeedRankingStrategy>()
 
-    forMode(mode: string): FeedRankingStrategy {
-        if (mode === "mostLiked") {
-            return this.mostLiked
+    constructor() {
+        this.register("latest", new LatestRankingStrategy())
+        this.register("mostLiked", new MostLikedRankingStrategy())
+        this.register("mostCommented", new MostCommentedRankingStrategy())
+        this.register("relevance", new RelevanceRankingStrategy())
+    }
+
+    register(mode: FeedMode, strategy: FeedRankingStrategy): void {
+        this.strategies.set(mode, strategy)
+    }
+
+    forMode(mode: FeedMode): FeedRankingStrategy {
+        const strategy = this.strategies.get(mode)
+
+        if (!strategy) {
+            return this.strategies.get("latest")!
         }
 
-        if (mode === "mostCommented") {
-            return this.mostCommented
-        }
-
-        if (mode === "relevance") {
-            return this.relevance
-        }
-
-        return this.latest
+        return strategy
     }
 }

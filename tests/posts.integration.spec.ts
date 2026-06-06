@@ -26,11 +26,16 @@ describe("API Integration", () => {
 
         prisma = app.get(PrismaService)
 
-        const cat = await prisma.category.upsert({
+        let cat = await prisma.category.findFirst({
             where: { slug: "technology" },
-            update: { name: "Tecnología" },
-            create: { name: "Tecnología", slug: "technology" },
         })
+
+        if (!cat) {
+            cat = await prisma.category.create({
+                data: { name: "Tecnología", slug: "technology" },
+            })
+        }
+
         categoryId = cat.id
     })
 
